@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Data Display</title>
+</head>
+<body>
+<h1>Data Display</h1>
+<table>
+    <thead>
+    <tr>
+        <th>Column 1</th>
+        <th>Column 2</th>
+        <!-- Add more column headers as needed -->
+    </tr>
+    </thead>
+    <tbody>
+    {% if rows %}
+        {% for row in rows %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+                <!-- Add more table cells as needed -->
+            </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="2">No data found.</td>
+        </tr>
+    {% endif %}
+    </tbody>
+</table>
+</body>
+</html>
