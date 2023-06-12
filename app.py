@@ -1,36 +1,11 @@
-# import os
-# from collections import namedtuple
-# import psycopg2
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text
 
 app = Flask(__name__)
 
-# Configure the database connection
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost:5432/postgres'
 db = SQLAlchemy(app)
 
-
-# class Ban(db.Model):
-#     __table_name__ = 'bans'
-
-#     bans_id = db.Column(db.Integer, primary_key=True)
-#     ban_1 = db.Column(db.String)
-#     ban_2 = db.Column(db.String)
-#     ban_3 = db.Column(db.String)
-#     ban_4 = db.Column(db.String)
-#     ban_5 = db.Column(db.String)
-
-#     def to_dict(self):
-#         return {
-#             'bans_id': self.bans_id,
-#             'ban_1': self.ban_1,
-#             'ban_2': self.ban_2,
-#             'ban_3': self.ban_3,
-#             'ban_4': self.ban_4,
-#             'ban_5': self.ban_5,
-#         }
 
 class Picks(db.Model):
     __tablename__ = 'picks'
@@ -54,16 +29,21 @@ class Ban(db.Model):
     ban_5 = db.Column(db.String)
 
 
-# class Games:
-#     __tablename__ = 'games'
-#     
-#     games_id = db.Column(db.Integer, primary_key=True)
-#     match
+class Games(db.Model):
+    __tablename__ = 'games'
 
-# @app.route('/champstats')
-# def display_champstats():
-#     champ_stats = {}
-# 
+    games_id = db.Column(db.Integer, primary_key=True)
+    match_id = db.Column(db.String)
+    match_date = db.Column(db.String)
+    game_number = db.Column(db.Integer)
+    team_blue_ref_id = db.Column(db.Integer)
+    team_red_ref_id = db.Column(db.Integer)
+    winner_ref_id = db.Column(db.String)
+    pick_blue_ref_id = db.Column(db.Integer)
+    pick_red_ref_id = db.Column(db.Integer)
+    ban_blue_ref_id = db.Column(db.Integer)
+    ban_red_ref_id = db.Column(db.Integer)
+
 
 class Teams(db.Model):
     __tablename_ = 'teams'
@@ -120,85 +100,87 @@ def display_champstats():
     return jsonify(output)
 
 
-# @app.route('/teamstats')
-# def display_teamstats():
-#     wins = 0
-#     losses = 0
-#     output = []
-#     teams = []
-#     picks = []
-#     all_teams = Teams.query.all()
-#     all_picks = Picks.query.all()
-#     # creates all teams with players
-#     for team in all_teams:
-#         tmp = {'teamName': team.__dict__[team_name], 'playerTop': team.__dict__[player_top],
-#                'playerJgl': team.__dict__[player_jgl],
-#                'playerMid': team.__dict__[player_mid],
-#                'playerBot': team.__dict__[player_bot],
-#                'playerSupp': team.__dict__[player_supp],
-#                'teamId': team.__dict__[teams_id]}
-#         teams.append(tmp)
-#     # now we need to do picks and win ratio
-#     for game in all_games:
-# 
-#         for team in teams:
-#             if (team['teamName'] == game.__dict__[winner_ref_id]):
-#                 wins += 1;
-#             else:
-#                 losses += 1;
-#             if (team['teamId'] == game.__dict__[team_blue_ref_id]):
+teams_dict = {
+    'Gen.G': 'GEN',
+    'T1': 'T1',
+    'Liiv SANDBOX': 'LSB',
+    'DWG KIA': 'DK',
+    'KT Rolster': 'KT',
+    'DRX': 'DRX',
+    'Kwangdong Freecs': 'KDF',
+    'Nongshim RedForce': 'NS',
+    'Fredit BRION': 'BRO',
+    'Hanwha Life Esports': 'HLE'
+}
 
 
-# @app.route('/test')
-# def display_data():
-#     query = text("SELECT * FROM bans WHERE ban_1 LIKE 'A%'")
-#     result = db.session.execute(query)
-#     rows = result.fetchall()
-# 
-#     keys = result.keys()
-#     results = [dict(zip(keys, row)) for row in rows]
-# 
-#     return jsonify(results)
+@app.route('/teamstats')
+def display_teamstats():
+    team_stats = {}
+    all_games = Games.query.all()
+
+    for game in all_games:
+        team_blue = Teams.query.get(game.team_blue_ref_id)
+        team_red = Teams.query.get(game.team_red_ref_id)
+
+        if team_blue.team_name not in team_stats:
+            team_stats[team_blue.team_name] = {
+                'team_name': teams_dict[team_blue.team_name],
+                'wins': 0,
+                'total_games': 0,
+                'win_ratio': 0
+            }
+
+        if team_red.team_name not in team_stats:
+            team_stats[team_red.team_name] = {
+                'team_name': teams_dict[team_red.team_name],
+                'wins': 0,
+                'total_games': 0,
+                'win_ratio': 0
+            }
+
+        team_stats[team_blue.team_name]['total_games'] += 1
+        team_stats[team_red.team_name]['total_games'] += 1
+
+        if game.winner_ref_id == team_blue.team_name:
+            team_stats[team_blue.team_name]['wins'] += 1
+        elif game.winner_ref_id == team_red.team_name:
+            team_stats[team_red.team_name]['wins'] += 1
+
+    output = []
+    for team_name, stats in team_stats.items():
+        wins = stats['wins']
+        total_games = stats['total_games']
+        win_ratio = wins / total_games if total_games > 0 else 0
+        win_ratio_string = '{0:.2f}%'.format(win_ratio * 100)
+
+        team_data = {
+            'team_name': team_name,
+            'wins': wins,
+            'loses': total_games - wins,
+            'total_games': total_games,
+            'win_ratio': win_ratio_string
+        }
+
+        player_details = Teams.query.filter_by(team_name=team_name).first()
+        if player_details:
+            team_data.update({
+                'player_top': player_details.player_top,
+                'player_jungle': player_details.player_jgl,
+                'player_mid': player_details.player_mid,
+                'player_bot': player_details.player_bot,
+                'player_support': player_details.player_supp
+            })
+
+        output.append(team_data)
+
+    return jsonify(output)
 
 
-# app = Flask(__name__)
-# db_host = os.environ.get('DB_HOST', 'localhost')
-# db_name = os.environ.get('DB_NAME', 'postgres')
-# db_user = os.environ.get('DB_USER', 'postgres')
-# db_password = os.environ.get('DB_PASSWORD', 'postgres')
-# db_port = os.environ.get('DB_PORT', '5432')
 @app.route('/')
-def siemanko():
+def home_page():
     return 'Siemanko, witam w mojej kuchni!'
 
 
 if __name__ == '__main__':
     app.run(debug=True)
-# @app.route('/test')
-# def display_data():
-# Establish a connection to the database
-#     conn = psycopg2.connect(
-#         host=db_host,
-#         port=db_port,
-#         dbname=db_name,
-#         user=db_user,
-#         password=db_password
-#     )
-
-#     cur = conn.cursor()
-#     cur.execute("SELECT * FROM bans;")
-
-#     rows = cur.fetchall()
-
-#     cur.close()
-#     conn.close()
-
-#     results = []
-#     for row in rows:
-#         results.append({
-#             'column1': row[0],
-#             'column2': row[1]})
-#     return jsonify(rows)
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
