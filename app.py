@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/postgres'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost:5432/postgres'
 db = SQLAlchemy(app)
 
 
@@ -57,8 +57,34 @@ class Teams(db.Model):
     player_supp = db.Column(db.String)
 
 
+@app.route('/sidewinrate')
+def display_side_winrate():
+    blue_wins = 0
+    red_wins = 0
+    all_games = Games.query.all()
+
+    for game in all_games:
+        blue_team = Teams.query.filter_by(teams_id=game.team_blue_ref_id, team_name=game.winner_ref_id).first()
+        red_team = Teams.query.filter_by(teams_id=game.team_red_ref_id, team_name=game.winner_ref_id).first()
+
+        if blue_team:
+            blue_wins += 1
+        elif red_team:
+            red_wins += 1
+
+    total_games = blue_wins + red_wins
+    blue_win_rate = round(blue_wins / total_games * 100, 2)
+    red_win_rate = round(red_wins / total_games * 100, 2)
+
+    output = {'blue': blue_win_rate, 'red': red_win_rate}
+
+    output_json = jsonify(output)
+    output_json.headers.add('Access-Control-Allow-Origin', '*')
+    return output_json
+
+
 @app.route('/champstats')
-def display_champstats():
+def display_champ_stats():
     champion_stats = {}
     output = []
     all_picks = Picks.query.all()
