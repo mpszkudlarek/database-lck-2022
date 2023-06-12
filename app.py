@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost:5432/postgres'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/postgres'
 db = SQLAlchemy(app)
 
 
@@ -97,7 +97,9 @@ def display_champstats():
         champion_stats[champ]['championName'] = champ
         tmp = {'pr': pr, 'br': br, 'presence': presence, 'championName': champ}
         output.append(tmp)
-    return jsonify(output)
+    output_json = jsonify(output)
+    output_json.headers.add('Access-Control-Allow-Origin', '*')
+    return output_json
 
 
 teams_dict = {
@@ -174,7 +176,9 @@ def display_teamstats():
 
         output.append(team_data)
 
-    return jsonify(output)
+    output_json = jsonify(output)
+    output_json.headers.add('Access-Control-Allow-Origin', '*')
+    return output_json
 
 
 @app.route('/')
