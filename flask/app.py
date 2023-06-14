@@ -1,5 +1,4 @@
 from collections import defaultdict
-
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
@@ -78,48 +77,48 @@ def display_alldata():
         pick_blue = Picks.query.get(game.pick_blue_ref_id)
         pick_red = Picks.query.get(game.pick_red_ref_id)
 
-        game_info = {
+        game_data.append({
+            'match_id': game.match_id,
             'match_date': match_date,
-            'blue_team_name': blue_team.team_name,
-            'blue_player_top': blue_team.player_top,
-            'blue_player_jungle': blue_team.player_jgl,
-            'blue_player_mid': blue_team.player_mid,
-            'blue_player_bot': blue_team.player_bot,
-            'blue_player_support': blue_team.player_supp,
-            'ban_blue1': ban_blue.ban_1,
-            'ban_blue2': ban_blue.ban_2,
-            'ban_blue3': ban_blue.ban_3,
-            'ban_blue4': ban_blue.ban_4,
-            'ban_blue5': ban_blue.ban_5,
-            'pick_blue1': pick_blue.pick_top,
-            'pick_blue2': pick_blue.pick_jgl,
-            'pick_blue3': pick_blue.pick_mid,
-            'pick_blue4': pick_blue.pick_bot,
-            'pick_blue5': pick_blue.pick_supp,
+            'game_number': game.game_number,
 
-            'red_team_name': red_team.team_name,
-            'red_player_top': red_team.player_top,
-            'red_player_jungle': red_team.player_jgl,
-            'red_player_mid': red_team.player_mid,
-            'red_player_bot': red_team.player_bot,
-            'red_player_support': red_team.player_supp,
+            'team_blue': blue_team.team_name,
+            'player_top_blue': blue_team.player_top,
+            'player_jgl_blue': blue_team.player_jgl,
+            'player_mid_blue': blue_team.player_mid,
+            'player_bot_blue': blue_team.player_bot,
+            'player_supp_blue': blue_team.player_supp,
+            'pick_blue_bot': pick_blue.pick_bot,
+            'pick_blue_jgl': pick_blue.pick_jgl,
+            'pick_blue_mid': pick_blue.pick_mid,
+            'pick_blue_supp': pick_blue.pick_supp,
+            'pick_blue_top': pick_blue.pick_top,
+            'ban_blue_1': ban_blue.ban_1,
+            'ban_blue_2': ban_blue.ban_2,
+            'ban_blue_3': ban_blue.ban_3,
+            'ban_blue_4': ban_blue.ban_4,
+            'ban_blue_5': ban_blue.ban_5,
 
-            'ban_red1': ban_red.ban_1,
-            'ban_red2': ban_red.ban_2,
-            'ban_red3': ban_red.ban_3,
-            'ban_red4': ban_red.ban_4,
-            'ban_red5': ban_red.ban_5,
+            'team_red': red_team.team_name,
+            'player_top_red': red_team.player_top,
+            'player_jgl_red': red_team.player_jgl,
+            'player_mid_red': red_team.player_mid,
+            'player_bot_red': red_team.player_bot,
+            'player_supp_red': red_team.player_supp,
+            'pick_red_bot': pick_red.pick_bot,
+            'pick_red_jgl': pick_red.pick_jgl,
+            'pick_red_mid': pick_red.pick_mid,
+            'pick_red_supp': pick_red.pick_supp,
+            'pick_red_top': pick_red.pick_top,
+            'ban_red_1': ban_red.ban_1,
+            'ban_red_2': ban_red.ban_2,
+            'ban_red_3': ban_red.ban_3,
+            'ban_red_4': ban_red.ban_4,
+            'ban_red_5': ban_red.ban_5,
 
-            'pick_red1': pick_red.pick_top,
-            'pick_red2': pick_red.pick_jgl,
-            'pick_red3': pick_red.pick_mid,
-            'pick_red4': pick_red.pick_bot,
-            'pick_red5': pick_red.pick_supp,
+            'winner': winner_team.team_name
 
-            'winner_team': winner_team.team_name
-        }
-
-        game_data.append(game_info)
+        })
 
     output_json = jsonify(game_data)
     output_json.headers.add('Access-Control-Allow-Origin', '*')
@@ -188,28 +187,20 @@ def display_champ_stats():
 
         blue_team = Teams.query.filter_by(teams_id=game.team_blue_ref_id).first()
 
-        if game.winner_ref_id == blue_team.team_name:
-            winning_pick = pick_blue
-        else:
-            winning_pick = pick_red
+        winning_pick = pick_blue if game.winner_ref_id == blue_team.team_name else pick_red
 
-        pick_win_count[winning_pick.pick_top] += 1
-        pick_win_count[winning_pick.pick_jgl] += 1
-        pick_win_count[winning_pick.pick_mid] += 1
-        pick_win_count[winning_pick.pick_bot] += 1
-        pick_win_count[winning_pick.pick_supp] += 1
+        pick_fields = ['pick_top', 'pick_jgl', 'pick_mid', 'pick_bot', 'pick_supp']
 
-        pick_total_count[pick_blue.pick_top] += 1
-        pick_total_count[pick_blue.pick_jgl] += 1
-        pick_total_count[pick_blue.pick_mid] += 1
-        pick_total_count[pick_blue.pick_bot] += 1
-        pick_total_count[pick_blue.pick_supp] += 1
+        for field in pick_fields:
+            pick = getattr(winning_pick, field)
+            pick_win_count[pick] += 1
 
-        pick_total_count[pick_red.pick_top] += 1
-        pick_total_count[pick_red.pick_jgl] += 1
-        pick_total_count[pick_red.pick_mid] += 1
-        pick_total_count[pick_red.pick_bot] += 1
-        pick_total_count[pick_red.pick_supp] += 1
+        for field in pick_fields:
+            pick_blue_val = getattr(pick_blue, field)
+            pick_red_val = getattr(pick_red, field)
+
+            pick_total_count[pick_blue_val] += 1
+            pick_total_count[pick_red_val] += 1
 
     pick_win_ratio = {}
     for champ in pick_total_count.keys():
@@ -243,22 +234,20 @@ def display_champ_stats():
     return output_json
 
 
-teams_dict = {
-    'Gen.G': 'GEN',
-    'T1': 'T1',
-    'Liiv SANDBOX': 'LSB',
-    'DWG KIA': 'DK',
-    'KT Rolster': 'KT',
-    'DRX': 'DRX',
-    'Kwangdong Freecs': 'KDF',
-    'Nongshim RedForce': 'NS',
-    'Fredit BRION': 'BRO',
-    'Hanwha Life Esports': 'HLE'
-}
-
-
 @app.route('/teamstats')
 def display_teamstats():
+    teams_dict = {
+        'Gen.G': 'GEN',
+        'T1': 'T1',
+        'Liiv SANDBOX': 'LSB',
+        'DWG KIA': 'DK',
+        'KT Rolster': 'KT',
+        'DRX': 'DRX',
+        'Kwangdong Freecs': 'KDF',
+        'Nongshim RedForce': 'NS',
+        'Fredit BRION': 'BRO',
+        'Hanwha Life Esports': 'HLE'
+    }
     team_stats = {}
     all_games = Games.query.all()
 
@@ -266,29 +255,19 @@ def display_teamstats():
         team_blue = Teams.query.get(game.team_blue_ref_id)
         team_red = Teams.query.get(game.team_red_ref_id)
 
-        if team_blue.team_name not in team_stats:
-            team_stats[team_blue.team_name] = {
-                'team_name': teams_dict[team_blue.team_name],
-                'wins': 0,
-                'total_games': 0,
-                'win_ratio': 0
-            }
+        for team in [team_blue, team_red]:
+            if team.team_name not in team_stats:
+                team_stats[team.team_name] = {
+                    'team_name': teams_dict[team.team_name],
+                    'wins': 0,
+                    'total_games': 0,
+                    'win_ratio': 0
+                }
 
-        if team_red.team_name not in team_stats:
-            team_stats[team_red.team_name] = {
-                'team_name': teams_dict[team_red.team_name],
-                'wins': 0,
-                'total_games': 0,
-                'win_ratio': 0
-            }
+            team_stats[team.team_name]['total_games'] += 1
 
-        team_stats[team_blue.team_name]['total_games'] += 1
-        team_stats[team_red.team_name]['total_games'] += 1
-
-        if game.winner_ref_id == team_blue.team_name:
-            team_stats[team_blue.team_name]['wins'] += 1
-        elif game.winner_ref_id == team_red.team_name:
-            team_stats[team_red.team_name]['wins'] += 1
+            if game.winner_ref_id == team.team_name:
+                team_stats[team.team_name]['wins'] += 1
 
     output = []
     for team_name, stats in team_stats.items():
@@ -324,8 +303,8 @@ def display_teamstats():
 
 @app.route('/')
 def home_page():
-    return 'Siemanko, witam w mojej kuchni!'
+    return 'Test'
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
