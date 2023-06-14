@@ -28,45 +28,44 @@ def display_alldata():
         pick_red = Picks.query.get(game.pick_red_ref_id)
 
         game_data.append({
-            'match_id': game.match_id,
             'match_date': match_date,
-            'game_number': game.game_number,
+            'blue_team_name': blue_team.team_name,
+            'blue_player_top': blue_team.player_top,
+            'blue_player_jungle': blue_team.player_jgl,
+            'blue_player_mid': blue_team.player_mid,
+            'blue_player_bot': blue_team.player_bot,
+            'blue_player_support': blue_team.player_supp,
+            'ban_blue1': ban_blue.ban_1,
+            'ban_blue2': ban_blue.ban_2,
+            'ban_blue3': ban_blue.ban_3,
+            'ban_blue4': ban_blue.ban_4,
+            'ban_blue5': ban_blue.ban_5,
+            'pick_blue1': pick_blue.pick_top,
+            'pick_blue2': pick_blue.pick_jgl,
+            'pick_blue3': pick_blue.pick_mid,
+            'pick_blue4': pick_blue.pick_bot,
+            'pick_blue5': pick_blue.pick_supp,
 
-            'team_blue': blue_team.team_name,
-            'player_top_blue': blue_team.player_top,
-            'player_jgl_blue': blue_team.player_jgl,
-            'player_mid_blue': blue_team.player_mid,
-            'player_bot_blue': blue_team.player_bot,
-            'player_supp_blue': blue_team.player_supp,
-            'pick_blue_bot': pick_blue.pick_bot,
-            'pick_blue_jgl': pick_blue.pick_jgl,
-            'pick_blue_mid': pick_blue.pick_mid,
-            'pick_blue_supp': pick_blue.pick_supp,
-            'pick_blue_top': pick_blue.pick_top,
-            'ban_blue_1': ban_blue.ban_1,
-            'ban_blue_2': ban_blue.ban_2,
-            'ban_blue_3': ban_blue.ban_3,
-            'ban_blue_4': ban_blue.ban_4,
-            'ban_blue_5': ban_blue.ban_5,
+            'red_team_name': red_team.team_name,
+            'red_player_top': red_team.player_top,
+            'red_player_jungle': red_team.player_jgl,
+            'red_player_mid': red_team.player_mid,
+            'red_player_bot': red_team.player_bot,
+            'red_player_support': red_team.player_supp,
 
-            'team_red': red_team.team_name,
-            'player_top_red': red_team.player_top,
-            'player_jgl_red': red_team.player_jgl,
-            'player_mid_red': red_team.player_mid,
-            'player_bot_red': red_team.player_bot,
-            'player_supp_red': red_team.player_supp,
-            'pick_red_bot': pick_red.pick_bot,
-            'pick_red_jgl': pick_red.pick_jgl,
-            'pick_red_mid': pick_red.pick_mid,
-            'pick_red_supp': pick_red.pick_supp,
-            'pick_red_top': pick_red.pick_top,
-            'ban_red_1': ban_red.ban_1,
-            'ban_red_2': ban_red.ban_2,
-            'ban_red_3': ban_red.ban_3,
-            'ban_red_4': ban_red.ban_4,
-            'ban_red_5': ban_red.ban_5,
+            'ban_red1': ban_red.ban_1,
+            'ban_red2': ban_red.ban_2,
+            'ban_red3': ban_red.ban_3,
+            'ban_red4': ban_red.ban_4,
+            'ban_red5': ban_red.ban_5,
 
-            'winner': winner_team.team_name
+            'pick_red1': pick_red.pick_top,
+            'pick_red2': pick_red.pick_jgl,
+            'pick_red3': pick_red.pick_mid,
+            'pick_red4': pick_red.pick_bot,
+            'pick_red5': pick_red.pick_supp,
+
+            'winner_team': winner_team.team_name
 
         })
 
@@ -173,9 +172,12 @@ def display_champ_stats():
         tmp = {
             'pr': str(pr_str),
             'br': str(br_str),
+            'bans': str(br),
             'presence': str(presence_str),
             'championName': champ,
-            'wr': str(wr)
+            'wr': str(wr),
+            'wins': str(pick_win_count[champ]),
+            'losses': str(pick_total_count[champ] - pick_win_count[champ]),
         }
         output.append(tmp)
 
@@ -210,6 +212,7 @@ def display_teamstats():
                 team_stats[team.team_name] = {
                     'team_name': teams_dict[team.team_name],
                     'wins': 0,
+                    'losses': 0,
                     'total_games': 0,
                     'win_ratio': 0
                 }
@@ -223,13 +226,13 @@ def display_teamstats():
     for team_name, stats in team_stats.items():
         wins = stats['wins']
         total_games = stats['total_games']
-        win_ratio = wins / total_games if total_games > 0 else 0
+        win_ratio = wins / total_games
         win_ratio_string = '{0:.2f}%'.format(win_ratio * 100)
 
         team_data = {
             'team_name': team_name,
             'wins': wins,
-            'loses': total_games - wins,
+            'losses': total_games - wins,
             'total_games': total_games,
             'win_ratio': win_ratio_string
         }
