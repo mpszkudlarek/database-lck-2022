@@ -59,52 +59,6 @@ class Teams(db.Model):
     player_supp = db.Column(db.String)
 
 
-@app.route('/winratio')
-def display_winrate():
-    pick_win_count = defaultdict(int)
-    pick_total_count = defaultdict(int)
-    all_games = Games.query.all()
-
-    for game in all_games:
-        pick_blue = Picks.query.get(game.pick_blue_ref_id)
-        pick_red = Picks.query.get(game.pick_red_ref_id)
-
-        blue_team = Teams.query.filter_by(teams_id=game.team_blue_ref_id).first()
-
-        if game.winner_ref_id == blue_team.team_name:
-            winning_pick = pick_blue
-        else:
-            winning_pick = pick_red
-
-        pick_win_count[winning_pick.pick_top] += 1
-        pick_win_count[winning_pick.pick_jgl] += 1
-        pick_win_count[winning_pick.pick_mid] += 1
-        pick_win_count[winning_pick.pick_bot] += 1
-        pick_win_count[winning_pick.pick_supp] += 1
-
-        pick_total_count[pick_blue.pick_top] += 1
-        pick_total_count[pick_blue.pick_jgl] += 1
-        pick_total_count[pick_blue.pick_mid] += 1
-        pick_total_count[pick_blue.pick_bot] += 1
-        pick_total_count[pick_blue.pick_supp] += 1
-
-        pick_total_count[pick_red.pick_top] += 1
-        pick_total_count[pick_red.pick_jgl] += 1
-        pick_total_count[pick_red.pick_mid] += 1
-        pick_total_count[pick_red.pick_bot] += 1
-        pick_total_count[pick_red.pick_supp] += 1
-
-    pick_win_ratio = {}
-    for champ in pick_total_count.keys():
-        win_count = pick_win_count[champ]
-        total_count = pick_total_count[champ]
-        win_ratio = win_count / total_count * 100
-        win_ratio_str = '{0:.2f}%'.format(win_ratio)
-        pick_win_ratio[champ] = {'win_ratio': win_ratio_str}
-
-    return jsonify(pick_win_ratio)
-
-
 @app.route('/alldata')
 def display_alldata():
     game_data = []
@@ -202,11 +156,13 @@ def display_side_winrate():
 def display_champ_stats():
     champion_stats = {}
     output = []
+    output_wr = []
+    pick_win_count = defaultdict(int)
+    pick_total_count = defaultdict(int)
+    all_games = Games.query.all()
     all_picks = Picks.query.all()
     all_bans = Ban.query.all()
     total_picks = len(all_picks) / 2
-
-    pick_win_ratio = display_winrate().json
 
     for pick in all_picks:
         for key in pick.__dict__.keys():
@@ -226,16 +182,60 @@ def display_champ_stats():
                 else:
                     champion_stats[champ] = {'pr': 0, 'br': 1}
 
+    for game in all_games:
+        pick_blue = Picks.query.get(game.pick_blue_ref_id)
+        pick_red = Picks.query.get(game.pick_red_ref_id)
+
+        blue_team = Teams.query.filter_by(teams_id=game.team_blue_ref_id).first()
+
+        if game.winner_ref_id == blue_team.team_name:
+            winning_pick = pick_blue
+        else:
+            winning_pick = pick_red
+
+        pick_win_count[winning_pick.pick_top] += 1
+        pick_win_count[winning_pick.pick_jgl] += 1
+        pick_win_count[winning_pick.pick_mid] += 1
+        pick_win_count[winning_pick.pick_bot] += 1
+        pick_win_count[winning_pick.pick_supp] += 1
+
+        pick_total_count[pick_blue.pick_top] += 1
+        pick_total_count[pick_blue.pick_jgl] += 1
+        pick_total_count[pick_blue.pick_mid] += 1
+        pick_total_count[pick_blue.pick_bot] += 1
+        pick_total_count[pick_blue.pick_supp] += 1
+
+        pick_total_count[pick_red.pick_top] += 1
+        pick_total_count[pick_red.pick_jgl] += 1
+        pick_total_count[pick_red.pick_mid] += 1
+        pick_total_count[pick_red.pick_bot] += 1
+        pick_total_count[pick_red.pick_supp] += 1
+
+    pick_win_ratio = {}
+    for champ in pick_total_count.keys():
+        win_count = pick_win_count[champ]
+        total_count = pick_total_count[champ]
+        win_ratio = win_count / total_count * 100
+        win_ratio_str = '{0:.2f}%'.format(win_ratio)
+        pick_win_ratio[champ] = win_ratio_str
+        output_wr.append(win_ratio_str)
+
     for champ in champion_stats:
         pr = champion_stats[champ]['pr']
         br = champion_stats[champ]['br']
-        wr = pick_win_ratio.get(champ, {}).get('win_ratio')
+        wr = pick_win_ratio.get(champ)
         presence = round((pr + br) / total_picks * 100, 2)
         presence_str = '{0:.2f}%'.format(presence)
         br_str = '{0:.2f}%'.format(br / total_picks * 100)
         pr_str = '{0:.2f}%'.format(pr / total_picks * 100)
         champion_stats[champ]['championName'] = champ
-        tmp = {'pr': pr_str, 'br': br_str, 'presence': presence_str, 'championName': champ, 'wr': wr}
+        tmp = {
+            'pr': str(pr_str),
+            'br': str(br_str),
+            'presence': str(presence_str),
+            'championName': champ,
+            'wr': str(wr)
+        }
         output.append(tmp)
 
     output_json = jsonify(output)
