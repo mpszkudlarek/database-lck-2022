@@ -232,8 +232,10 @@ def display_champ_stats():
         wr = pick_win_ratio.get(champ, {}).get('win_ratio')
         presence = round((pr + br) / total_picks * 100, 2)
         presence_str = '{0:.2f}%'.format(presence)
+        br_str = '{0:.2f}%'.format(br / total_picks * 100)
+        pr_str = '{0:.2f}%'.format(pr / total_picks * 100)
         champion_stats[champ]['championName'] = champ
-        tmp = {'pr': pr, 'br': br, 'presence': presence_str, 'championName': champ, 'wr': wr}
+        tmp = {'pr': pr_str, 'br': br_str, 'presence': presence_str, 'championName': champ, 'wr': wr}
         output.append(tmp)
 
     output_json = jsonify(output)
