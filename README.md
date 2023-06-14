@@ -1,0 +1,1 @@
+# Database course project - LCK SUMMER 2022 DB
